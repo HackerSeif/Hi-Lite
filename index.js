@@ -8,8 +8,8 @@ import cors from "cors";
 // Setup configuration
 const configuration = new Configuration({
     // Pass in & Set 2 values: organization & API Key values
-    organization: "org-D9xpOCM3B26nBReqCNPUkwJW",
-    apiKey: "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", //GPT4API_V2.1
+    organization: "org-XXX",
+    apiKey: "sk-XXX", //GPT4API_V2.1
 })
 
 const openai = new OpenAIApi(configuration); // Initialize configuration
