@@ -1,17 +1,14 @@
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-	if (message.action === "extractText") {
-	  chrome.scripting.executeScript({
-		target: { tabId: message.tabId },
-		function: extractText,
-	  }, (results) => {
-		if (chrome.runtime.lastError || !results || !results.length) {
-		  sendResponse({ error: chrome.runtime.lastError || "No results returned" });
-		  return;
-		}
-		sendResponse(results[0].result);
-	  });
-	}
-	return true;  // Will respond asynchronously.
+chrome.action.onClicked.addListener((tab) => {
+	chrome.scripting.executeScript({
+	  target: { tabId: tab.id },
+	  function: extractText,
+	}, (results) => {
+	  if (chrome.runtime.lastError || !results || !results.length) {
+		console.error(chrome.runtime.lastError || "No results returned");
+		return;
+	  }
+	  console.log(results[0].result);
+	});
   });
   
   function extractText() {
@@ -22,3 +19,4 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 	});
 	return text;
   }
+  
