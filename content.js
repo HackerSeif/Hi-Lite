@@ -1,4 +1,3 @@
-// Extract all word sequences from the text
 function escapeRegex(string) {
     return string.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
 }
@@ -6,8 +5,6 @@ function escapeRegex(string) {
 function highlightTextInNode(node, searchText) {
     let textContent = "";
     const textNodes = [];
-    
-    // Depth-first traversal to accumulate text and nodes
     function collectTextNodes(node) {
         if (node.nodeType === Node.TEXT_NODE) {
             textContent += node.nodeValue;
@@ -18,25 +15,18 @@ function highlightTextInNode(node, searchText) {
             }
         }
     }
-    
     collectTextNodes(node);
-    
-    // Use a regex to check for exact match with word boundaries
     const regex = new RegExp(`\\b${escapeRegex(searchText)}\\b`);
     const match = regex.exec(textContent);
     if (!match) return;
-
     let startIndex = match.index;
     let endIndex = startIndex + searchText.length;
-
-    // Loop to replace text in accumulated text nodes
     for (let i = 0; i < textNodes.length; i++) {
         const textNode = textNodes[i];
         if (startIndex < textNode.nodeValue.length) {
             const span = document.createElement('span');
             span.style.color = 'black';
             span.style.fontWeight = '600';
-            
             if (endIndex <= textNode.nodeValue.length) {
                 const before = textNode.nodeValue.substring(0, startIndex);
                 const matched = textNode.nodeValue.substring(startIndex, endIndex);
@@ -72,7 +62,6 @@ function highlightSentences(sentences) {
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.type === 'API_RESPONSE') {
-        // This will make all text on the page dark gray
         const allElements = document.querySelectorAll('*');
         allElements.forEach(element => {
             element.style.color = 'darkgray';
@@ -86,8 +75,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         highlightSentences(sentences);
     }
 });
-
-
 
 //Make highlight quantity dynamic to page size, instead of 5 sentences everytime (kinda done)
 
