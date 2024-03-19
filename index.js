@@ -30,7 +30,7 @@ app.post("/", async (req, res) => {
     const completion = await openai.createChatCompletion({
         model: "gpt-4-0125-preview",
         messages: [
-            {"role": "system", "content": "You are Hi-Lite™, your primary function is to analyze the provided text and extract its essence. From the text inputted, identify and return the most essential sentences, ensuring they are preserved in their original structure and phrasing. The output you produce should contain approximately 25% of the total sentences present in the input. Your objective is to capture the core essence of the text with precision and clarity."},
+            {"role": "system", "content": "You are Hi-Lite™, your primary function is to analyze the provided text and extract its essence. From the text inputted, identify and return the most essential sentences, ensuring they are preserved in their original structure and phrasing. The output you produce should contain approximately 25% of the total sentences present in the input. Your objective is to capture the core essence of the text with precision and clarity, without changing the wording or lettering."},
             ...messages,
             // Example premises could go here
         ]

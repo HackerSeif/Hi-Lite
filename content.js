@@ -16,40 +16,42 @@ function highlightTextInNode(node, searchText) {
         }
     }
     collectTextNodes(node);
-    const regex = new RegExp(`\\b${escapeRegex(searchText)}\\b`);
-    const match = regex.exec(textContent);
-    if (!match) return;
-    let startIndex = match.index;
-    let endIndex = startIndex + searchText.length;
-    for (let i = 0; i < textNodes.length; i++) {
-        const textNode = textNodes[i];
-        if (startIndex < textNode.nodeValue.length) {
-            const span = document.createElement('span');
-            span.style.color = 'black';
-            span.style.fontWeight = '600';
-            if (endIndex <= textNode.nodeValue.length) {
-                const before = textNode.nodeValue.substring(0, startIndex);
-                const matched = textNode.nodeValue.substring(startIndex, endIndex);
-                const after = textNode.nodeValue.substring(endIndex);
-                textNode.nodeValue = before;
-                span.textContent = matched;
-                if (after) {
-                    const afterNode = document.createTextNode(after);
-                    textNode.parentNode.insertBefore(afterNode, textNode.nextSibling);
+    const regex = new RegExp(`\\b${escapeRegex(searchText)}\\b`, 'gi');
+    let match;
+    while ((match = regex.exec(textContent)) !== null) {
+        let startIndex = match.index;
+        let endIndex = startIndex + searchText.length;
+        for (let i = 0; i < textNodes.length; i++) {
+            const textNode = textNodes[i];
+            if (startIndex < textNode.nodeValue.length) {
+                const span = document.createElement('span');
+                span.style.color = 'black';
+                span.style.backgroundColor = 'yellow'; // Highlight color changed to yellow for visibility
+                span.style.fontWeight = 'bold';
+                if (endIndex <= textNode.nodeValue.length) {
+                    const before = textNode.nodeValue.substring(0, startIndex);
+                    const matched = textNode.nodeValue.substring(startIndex, endIndex);
+                    const after = textNode.nodeValue.substring(endIndex);
+                    textNode.nodeValue = before;
+                    span.textContent = matched;
+                    if (after) {
+                        const afterNode = document.createTextNode(after);
+                        textNode.parentNode.insertBefore(afterNode, textNode.nextSibling);
+                    }
+                    textNode.parentNode.insertBefore(span, textNode.nextSibling);
+                    break;
+                } else {
+                    const before = textNode.nodeValue.substring(0, startIndex);
+                    const matched = textNode.nodeValue.substring(startIndex);
+                    textNode.nodeValue = before;
+                    span.textContent = matched;
+                    textNode.parentNode.insertBefore(span, textNode.nextSibling);
+                    endIndex -= textNode.nodeValue.length;
                 }
-                textNode.parentNode.insertBefore(span, textNode.nextSibling);
-                break;
             } else {
-                const before = textNode.nodeValue.substring(0, startIndex);
-                const matched = textNode.nodeValue.substring(startIndex);
-                textNode.nodeValue = before;
-                span.textContent = matched;
-                textNode.parentNode.insertBefore(span, textNode.nextSibling);
+                startIndex -= textNode.nodeValue.length;
                 endIndex -= textNode.nodeValue.length;
             }
-        } else {
-            startIndex -= textNode.nodeValue.length;
-            endIndex -= textNode.nodeValue.length;
         }
     }
 }
@@ -62,19 +64,23 @@ function highlightSentences(sentences) {
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.type === 'API_RESPONSE') {
-        const allElements = document.querySelectorAll('*');
-        allElements.forEach(element => {
-            element.style.color = 'darkgray';
-        });
-
-        const contentValue = message.data && message.data.completion && message.data.completion.message && message.data.completion.message.content 
-            ? String(message.data.completion.message.content) 
-            : "No content available";
-        
-        const sentences = contentValue.split(/\.\s*/).filter(sentence => sentence.trim().length > 0);
+        modifyPageAppearance();
+        const sentences = extractSentencesFromResponse(message.data);
         highlightSentences(sentences);
     }
 });
+
+function modifyPageAppearance() {
+    const allElements = document.querySelectorAll('*');
+    allElements.forEach(element => element.style.color = 'darkgray');
+}
+
+function extractSentencesFromResponse(data) {
+    const contentValue = data && data.completion && data.completion.message && data.completion.message.content 
+        ? String(data.completion.message.content) 
+        : "No content available";
+    return contentValue.split(/(?<!\b[A-Z]\.)(?<!\b[A-Z]{2})\.\s+/).filter(sentence => sentence.trim().length > 0);
+}
 
 //Make highlight quantity dynamic to page size, instead of 5 sentences everytime (kinda done)
 
