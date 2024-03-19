@@ -1,46 +1,61 @@
-// Import dotenv to use environment variables
+// index.js
 import dotenv from 'dotenv';
-dotenv.config(); // This loads the environment variables from the .env file
-
-// Import configuration and OpenAI API
-import { Configuration, OpenAIApi } from "openai";
-
-// Add web server to access on browser
 import express from "express"; 
 import bodyParser from "body-parser";
 import cors from "cors";
+import { Configuration, OpenAIApi } from "openai";
+import { Readability } from "@mozilla/readability";
+import { JSDOM } from "jsdom";
+import fetch from 'node-fetch'; // Assuming you're using node-fetch to fetch the article content
 
-// Setup configuration using environment variables
+dotenv.config();
+
 const configuration = new Configuration({
-    organization: process.env.ORGANIZATION, // Use organization from .env
-    apiKey: process.env.API_KEY, // Use API_KEY from .env
+    organization: process.env.ORGANIZATION,
+    apiKey: process.env.API_KEY,
 });
+const openai = new OpenAIApi(configuration);
 
-const openai = new OpenAIApi(configuration); // Initialize configuration
-const app = express(); // Initialize express
-const port = 3000; // Setup a port being 3000
+const app = express();
+const port = 3000;
 
-app.use(bodyParser.json()); // Use bodyParser
-app.use(cors()); // Use cors
+app.use(bodyParser.json());
+app.use(cors());
 
-app.post("/", async (req, res) => {
-    const { messages } = req.body; // Listen for messages that get sent as part of post request
+async function fetchArticleContent(articleUrl) {
+    const response = await fetch(articleUrl);
+    return await response.text();
+}
 
-    console.log(messages)
-    const completion = await openai.createChatCompletion({
-        model: "gpt-4-0125-preview",
-        messages: [
-            {"role": "system", "content": "You are Hi-Lite™, your primary function is to analyze the provided text and extract its essence. From the text inputted, identify and return the most essential sentences, ensuring they are preserved in their original structure and phrasing. The output you produce should contain approximately 25% of the total sentences present in the input. Your objective is to capture the core essence of the text with precision and clarity, without changing the wording or lettering."},
-            ...messages,
-            // Example premises could go here
-        ]
-    });
-     
-    res.json({ // response as a json object of the completion itself
-        completion: completion.data.choices[0]
-    });
+app.post("/process-article", async (req, res) => {
+    const { articleUrl } = req.body;
+    try {
+        const articleHtml = await fetchArticleContent(articleUrl);
+        const dom = new JSDOM(articleHtml);
+        let reader = new Readability(dom.window.document);
+        const article = reader.parse();
+
+        // Now, use the extracted content with GPT-4 to further process or summarize it
+        const messages = [{
+            "role": "system",
+            "content": "You are Hi-Lite™, your primary function is to analyze the provided text and extract its essence. From the text inputted, identify and return the most essential sentences, ensuring they are preserved in their original structure and phrasing. The output you produce should contain approximately 25% of the total sentences present in the input. Your objective is to capture the core essence of the text with precision and clarity."
+        }, {
+            "role": "user",
+            "content": article.textContent // Assuming we want to process the textContent of the article
+        }];
+
+        const completion = await openai.createChatCompletion({
+            model: "gpt-4",
+            messages: messages,
+        });
+
+        res.json({ content: completion.data.choices[0].message.content });
+    } catch (error) {
+        console.error("Error processing article:", error);
+        res.status(500).json({ error: "Failed to process article" });
+    }
 });
 
 app.listen(port, () => {
-    console.log(`Example app listening at http://localhost:${port}`);
+    console.log(`Server listening at http://localhost:${port}`);
 });
