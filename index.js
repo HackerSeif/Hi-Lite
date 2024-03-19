@@ -1,7 +1,7 @@
 // Import configuration
 import { Configuration, OpenAIApi } from "openai";
 // Add web server to access on browser
-import express from "express";
+import express from "express"; 
 import bodyParser from "body-parser";
 import cors from "cors";
 
