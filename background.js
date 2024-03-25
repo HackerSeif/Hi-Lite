@@ -6,7 +6,7 @@ chrome.action.onClicked.addListener((tab) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ articleUrl })
     })
-    .then(response => response.json())
+    .then(response => response.json()) 
     .then(data => {
         if (!data.content) {
             console.error("No content available after processing");
